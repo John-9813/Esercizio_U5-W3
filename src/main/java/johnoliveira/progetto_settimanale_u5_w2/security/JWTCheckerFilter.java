@@ -4,9 +4,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import johnoliveira.progetto_settimanale_u5_w2.entities.Dipendente;
 import johnoliveira.progetto_settimanale_u5_w2.exceptions.UnauthorizedException;
+import johnoliveira.progetto_settimanale_u5_w2.services.DipendenteService;
 import johnoliveira.progetto_settimanale_u5_w2.tools.JWT;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,6 +23,9 @@ public class JWTCheckerFilter extends OncePerRequestFilter {
 
     @Autowired
     private JWT jwt;
+
+    @Autowired
+    private DipendenteService dipendenteService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -35,12 +43,21 @@ public class JWTCheckerFilter extends OncePerRequestFilter {
         // 3. Verifichiamo se il token è stato manipolato (verifichiamo la signature) o se è scaduto (verifichiamo Expiration Date)
         jwt.verifyToken(accessToken);
 
+        // ******** AUTORIZZAZIONE************
+        // 1. Cerco l'utente tramite id (l'id l'abbiamo messo nel token!)
+        String dipendenteId = jwt.getIdFromToken(accessToken);
+        Dipendente currentDipendente = this.dipendenteService.findById(Long.valueOf(dipendenteId));
+        // 2. Trovato l'utente posso associarlo al cosiddetto Security Context
+        Authentication authentication = new UsernamePasswordAuthenticationToken(currentDipendente, null, currentDipendente.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(authentication); // si aggiorna il SecurityContext associandogli l'utente autenticato
+
         // 4. Se tutto è OK, andiamo avanti (passiamo la richiesta al prossimo filtro o al controller)
-        filterChain.doFilter(request, response); // Tramite .doFilter(req,res) richiamo il prossimo membro della catena (o un filtro o un controller)
+        filterChain.doFilter(request, response);
 
         // 5. Se qualcosa non va con il token --> 401
     }
-	
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         return new AntPathMatcher().match("/auth/**", request.getServletPath());

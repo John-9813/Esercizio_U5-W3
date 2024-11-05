@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +28,9 @@ public class DipendenteService {
     @Autowired
     private Cloudinary cloudinaryUploader;
 
+    @Autowired
+    private PasswordEncoder bcrypt;
+
     // salvo il dipendente con  verifica email
     public Dipendente save(NewDipendenteDTO body) {
         // 1. Verifico che l'email non sia già in uso
@@ -37,7 +41,7 @@ public class DipendenteService {
         );
 
         // 2. se è ok allora aggiungo i campi "server-generated" come ad esempio avatarURL
-        Dipendente newDipendente = new Dipendente(body.nome(), body.cognome(), body.email(), body.username(), body.password(), "https://ui-avatars.com/api/?name=" + body.nome() + "+" + body.cognome());
+        Dipendente newDipendente = new Dipendente(body.nome(), body.cognome(), body.email(), body.username(), bcrypt.encode(body.password()), "https://ui-avatars.com/api/?name=" + body.nome() + "+" + body.cognome());
 
         // 3. salvo il nuovo dipendente
         return this.dipendenteRepository.save(newDipendente);

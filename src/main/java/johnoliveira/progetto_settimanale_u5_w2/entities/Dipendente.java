@@ -1,5 +1,6 @@
 package johnoliveira.progetto_settimanale_u5_w2.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@JsonIgnoreProperties({"password", "role", "accountNonLocked", "credentialsNonExpired", "accountNonExpired", "authorities", "enabled"})
 public class Dipendente implements UserDetails {
 
     @Id
@@ -50,13 +52,15 @@ public class Dipendente implements UserDetails {
         this.email = email;
         this.avatarURL = avatarURL;
         this.password = password;
-        this.role = Role.USER;
+        this.role = Role.USER;  // Tutti all'inizio vengono creati come utenti "semplici"
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Questo metodo deve tornare una lista di ruoli utente.
-        // In dettaglio vuole una lista di oggetti che implementano GFrantedAuthority.
+        // Questo metodo deve tornare una lista di ruoli dell'utente. Più in dettaglio vuole che venga restituita una lista di oggetti che implementano
+        // GrantedAuthority. SimpleGrantedAuthority è una classe che rappresenta i ruoli degli utenti nel mondo Spring Security
+        // ed implementa GrantedAuthority, quindi dobbiamo prendere il nostro ruolo (enum) e passare il name()
+        // di quel ruolo al costruttore dell'oggetto
         return List.of(new SimpleGrantedAuthority(this.role.name()));
     }
 

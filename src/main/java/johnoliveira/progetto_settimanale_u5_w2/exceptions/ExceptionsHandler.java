@@ -2,6 +2,7 @@ package johnoliveira.progetto_settimanale_u5_w2.exceptions;
 
 import johnoliveira.progetto_settimanale_u5_w2.payloads.ErrorsRespDTO;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,6 +22,12 @@ public class ExceptionsHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED) // 401
     public ErrorsRespDTO handleUnauthorized(UnauthorizedException ex) {
         return new ErrorsRespDTO(ex.getMessage(), LocalDateTime.now());
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN) // 403
+    public ErrorsRespDTO handleForbidden(AuthorizationDeniedException ex) {
+        return new ErrorsRespDTO("Non hai i permessi per accedere", LocalDateTime.now());
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
